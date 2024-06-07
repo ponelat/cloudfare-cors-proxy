@@ -12,12 +12,14 @@ export default {
     const url = new URL(request.url);
 
     // Path isn't / or empty? Return usage
-    if (url.pathname !== "/" || url.pathname !== '') {
+    if (url.pathname !== "/" && url.pathname !== '') {
+      console.log('Warn: Pathname !== / or ""')
       return usageResponse(request)
     }
 
     // No search? Return usage
-    if (request.search.length < 2) {
+    if (url.search.length < 2) {
+      console.log('Warn: Search < 2 chars')
       return usageResponse(request)
     }
 
@@ -28,6 +30,7 @@ export default {
 
     // Checked allowable methods
     if (!ALLOWED_METHODS.includes(request.method)) {
+      console.log('Warn: Method not allowed')
       return new Response(null, {
 	status: 405,
 	statusText: "Method Not Allowed",
@@ -37,12 +40,17 @@ export default {
     // Proxy request
     return handleRequest(request);
 
-
     // -------- Functions...
 
     function usageResponse(request) {
       const url = new URL(request.url)
-      return new Response(`{"usage": "${url.origin}/?encodeURIComponent(<url>)"}`, {status: 500});
+      const resObj = JSON.stringify({
+        "usage": `${url.origin}/?encodeURIComponent(<url>)`,
+        search: url.search,
+        pathname: url.pathname,
+      }, null, 2)
+      console.warn("Usage: ", resObj)
+      return new Response(resObj, {status: 500});
     }
 
     async function handleRequest(request) {
